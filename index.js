@@ -777,6 +777,48 @@ exports.onUserCreated = functions
     return batch.commit();
   });
 
+// trigger for updated post
+exports.onPostUpdated = functions
+  .region("europe-west2")
+  .firestore.document("posts/{id}")
+  .onUpdate((change) => {
+    if (change.bafore.data().title !== change.after.data().title) {
+      console.log("post has changed");
+
+      //define client for algolia
+      const client = algoliasearch(
+        process.env.ALGOLIA_APP_ID,
+        process.env.ALGOLIA_API_KEY
+      );
+
+      // define post object
+      const post = {};
+
+      // get the post document's data
+      post.title = change.after.data().title;
+      post.slug = change.after.data().slug;
+      post.shrineName = change.after.data().shrineName;
+      post.postThumbnail = change.after.data().postThumbnail;
+
+      // add objectId field required by Algolia
+      post.objectID = change.after.id;
+
+      // write algolia index
+      const index = client.initIndex(process.env.ALGOLIA_INDEX_NAME);
+
+      // save algolia object;
+      index
+        .saveObject(post)
+        .then(() => {
+          console.log("Post Data updated to Algolia", objectID);
+        })
+        .catch((error) => {
+          console.error("Error when updating post data to Algolia", error);
+          process.exit(1);
+        });
+    }
+  });
+
 //trigger for ading and updating every associated document to the post once its created(likes, comments, post counts, saved posts)
 exports.onPostCreated = functions
   .region("europe-west2")
