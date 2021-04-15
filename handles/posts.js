@@ -100,6 +100,25 @@ exports.getNextPosts = async (req, res) => {
   }
 };
 
+// fetch total posts count from database
+exports.getTotalPostsCount = (req, res) => {
+  var postMetricsRef = db.collection("postsMetrics").doc("count");
+
+  postMetricsRef
+    .get()
+    .then((doc) => {
+      if (doc.exists) {
+        console.log("Document data:", doc.data());
+        return res.json(doc.data().total);
+      } else {
+        console.log("no such document!");
+      }
+    })
+    .catch((err) => {
+      console.log("Error getting document: ", err);
+    });
+};
+
 // fetch all posts from database
 exports.getAllPostIds = (req, res) => {
   // define orderBy parameter

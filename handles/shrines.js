@@ -103,6 +103,7 @@ exports.createShrine = (req, res) => {
     followers: 0,
     postIds: [],
     users: [],
+    posts: 0,
     categoryName: req.body.categoryName,
     categoryId: null,
     description: req.body.description,

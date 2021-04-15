@@ -21,6 +21,7 @@ const FBAuth = require("./util/FBAuth");
 const {
   getAllPosts,
   getAllPostIds,
+  getTotalPostsCount,
   getNextPosts,
   getTailoredUserPost,
   getTailoredUserPostIds,
@@ -103,6 +104,9 @@ app.get("/posts/:clickedButton", getAllPosts);
 
 // fetch all posts Ids from the database
 app.get("/postIds/:clickedButton", getAllPostIds);
+
+// fetch total posts count from database
+app.get("/totalPostsCount", getTotalPostsCount);
 
 // fetch next posts for pagination
 app.get("/nextPosts/:clickedButton/:parameter", getNextPosts);
@@ -679,11 +683,13 @@ exports.onPostDeleted = functions
                   deletedAt: new Date().toISOString(),
                 });
 
+                // shrine collection update
                 const shrineRef = db.doc(
                   `/shrines/${snapshot.data().shrineId}`
                 );
                 batch.update(shrineRef, {
                   postIds: admin.firestore.FieldValue.arrayRemove(postId),
+                  posts: admin.firestore.FieldValue.increment(-1),
                 });
 
                 return db
@@ -698,12 +704,20 @@ exports.onPostDeleted = functions
                   userId.push(doc.id);
                 });
 
+                // update postMetrics collection
+                const postMetricsRef = db.doc(`/postsMetrics/count`);
+                batch.update(postMetricsRef, {
+                  total: admin.firestore.FieldValue.increment(-1),
+                });
+
+                // update users collection
                 const userRef = db.doc(`/users/${userId[0]}`);
                 batch.update(userRef, {
                   postCount: admin.firestore.FieldValue.increment(-1),
                   vibrations: admin.firestore.FieldValue.increment(-0.25),
                 });
 
+                // update category collection
                 const categoryRef = db.doc(
                   `/category/${snapshot.data().categoryId}`
                 );
@@ -805,14 +819,28 @@ exports.onPostCreated = functions
         process.exit(1);
       });
 
+    // update postMetrics collection
+    const postMetricsRef = db.doc(`/postsMetrics/count`);
+    batch.update(postMetricsRef, {
+      total: admin.firestore.FieldValue.increment(1),
+    });
+
+    //  users collection update
     const userRef = db.doc(`/users/${snapshot.data().username}`);
     batch.update(userRef, {
       postCount: admin.firestore.FieldValue.increment(1),
       vibrations: admin.firestore.FieldValue.increment(0.25),
     });
 
+    // category collections update
     const categoryRef = db.doc(`/category/${snapshot.data().categoryId}`);
     batch.update(categoryRef, {
+      posts: admin.firestore.FieldValue.increment(1),
+    });
+
+    // shrine collections update
+    const shrineRef = db.doc(`/shrines/${snapshot.data().shrineId}`);
+    batch.update(shrineRef, {
       posts: admin.firestore.FieldValue.increment(1),
     });
 
