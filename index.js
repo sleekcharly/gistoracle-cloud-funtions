@@ -746,31 +746,31 @@ exports.onUserCreated = functions
     // shrine 1
     const shrine1Ref = db.collection("shrines").doc("NFv3EJNma7h3KUmi7hst");
     batch.update(shrine1Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.id),
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine2
     const shrine2Ref = db.collection("shrines").doc("ejFUeub9lCz1SsWlADnM");
     batch.update(shrine2Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.id),
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine3
     const shrine3Ref = db.collection("shrines").doc("yfTr2HLSaXbTSQATg5eQ");
     batch.update(shrine3Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.id),
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine 4
     const shrine4Ref = db.collection("shrines").doc("Dr6WutLkRVYigHiIweaJ");
     batch.update(shrine4Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.id),
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine 5
     const shrine5Ref = db.collection("shrines").doc("B8sGI2bcioXOsWuYRl3q");
     batch.update(shrine4Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.id),
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     // commit batch update to firebase
