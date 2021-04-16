@@ -910,16 +910,24 @@ exports.onShrineCreated = functions
           userId.push(doc.id);
         });
 
+        // shrine collection update
         const shrineRef = db.doc(`/shrines/${snapshot.id}`);
         batch.update(shrineRef, {
           users: admin.firestore.FieldValue.arrayUnion(userData[0].userId),
           followers: admin.firestore.FieldValue.increment(1),
         });
 
+        // user collection update
         const userRef = db.doc(`/users/${userId[0]}`);
         batch.update(userRef, {
           vibrations: admin.firestore.FieldValue.increment(0.5),
           shrines: admin.firestore.FieldValue.arrayUnion(snapshot.id),
+        });
+
+        // category collection update
+        const categoryRef = db.doc(`/category/${snapshot.data().categoryId}`);
+        batch.update(categoryRef, {
+          shrines: admin.firestore.FieldValue.increment(1),
         });
 
         return db
@@ -953,10 +961,17 @@ exports.onShrineDeleted = functions
           userId.push(doc.id);
         });
 
+        // user collection update
         const userRef = db.doc(`/users/${userId[0]}`);
         batch.update(userRef, {
           vibrations: admin.firestore.FieldValue.increment(-0.5),
           shrines: admin.firestore.FieldValue.arrayRemove(snapshot.id),
+        });
+
+        // category collection update
+        const categoryRef = db.doc(`/category/${snapshot.data().categoryId}`);
+        batch.update(categoryRef, {
+          shrines: admin.firestore.FieldValue.increment(-1),
         });
 
         return db
