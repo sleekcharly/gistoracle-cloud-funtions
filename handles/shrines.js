@@ -306,6 +306,7 @@ exports.followShrine = (req, res) => {
     .where("shrineId", "==", req.params.shrineId)
     .limit(1);
 
+  // get shrineDocument
   const shrineDocument = db.doc(`/shrines/${req.params.shrineId}`);
 
   let shrineData;
@@ -365,9 +366,13 @@ exports.followShrine = (req, res) => {
               userId.push(doc.id);
             });
 
+            //update user document
             const userRef = db.doc(`/users/${userId[0]}`);
             userRef.update({
               vibrations: admin.firestore.FieldValue.increment(0.2),
+              shrines: admin.firestore.FieldValue.arrayUnion(
+                req.params.shrineId
+              ),
             });
 
             return res.json(shrineData);
@@ -455,6 +460,9 @@ exports.unFollowShrine = (req, res) => {
             const userRef = db.doc(`/users/${userId[0]}`);
             userRef.update({
               vibrations: admin.firestore.FieldValue.increment(-0.2),
+              shrines: admin.firestore.FieldValue.arrayRemove(
+                req.params.shrineId
+              ),
             });
 
             res.json(shrineData);
