@@ -744,32 +744,50 @@ exports.onUserCreated = functions
 
     // populate pinned shrines with new user id
     // shrine 1
-    const shrine1Ref = db.collection("shrines").doc("NFv3EJNma7h3KUmi7hst");
+    const shrine1Ref = db.collection("shrines").doc("t4TYS8lU7EPPrvWGsVT7");
     batch.update(shrine1Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine2
-    const shrine2Ref = db.collection("shrines").doc("ejFUeub9lCz1SsWlADnM");
+    const shrine2Ref = db.collection("shrines").doc("x8D6pc6vIk1ozRG73XRX");
     batch.update(shrine2Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine3
-    const shrine3Ref = db.collection("shrines").doc("yfTr2HLSaXbTSQATg5eQ");
+    const shrine3Ref = db.collection("shrines").doc("Qd5qTeyQ5yCnYePz9HYs");
     batch.update(shrine3Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine 4
-    const shrine4Ref = db.collection("shrines").doc("Dr6WutLkRVYigHiIweaJ");
+    const shrine4Ref = db.collection("shrines").doc("G4zn8pWomBTFfpT9pDSk");
     batch.update(shrine4Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
     //shrine 5
-    const shrine5Ref = db.collection("shrines").doc("B8sGI2bcioXOsWuYRl3q");
-    batch.update(shrine4Ref, {
+    const shrine5Ref = db.collection("shrines").doc("1c8FiHmEDDMl1qqoZhDO");
+    batch.update(shrine5Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+    });
+
+    //shrine 6
+    const shrine6Ref = db.collection("shrines").doc("LZYPJnYiuBg3plJ2XK88");
+    batch.update(shrine6Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+    });
+
+    //shrine 7
+    const shrine7Ref = db.collection("shrines").doc("eeGKpTw993mDLk9CZQU5");
+    batch.update(shrine7Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+    });
+
+    //shrine 5
+    const shrine8Ref = db.collection("shrines").doc("NxxBIaM4NW5VKjzGuVIC");
+    batch.update(shrine8Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
     });
 
