@@ -511,6 +511,8 @@ exports.onUserDeleted = functions
     // batch for batch operations
     const batch = db.batch();
 
+    const admin = require("firebase-admin");
+
     //perform filtering and update operations
     // for comment Likes
     db.collection("commentLikes")
@@ -576,6 +578,21 @@ exports.onUserDeleted = functions
         console.error(err);
       });
 
+    // for shrine collection users array
+    db.collection("shrines")
+      .where("userId", "array-contains", userId)
+      .get()
+      .then((data) => {
+        if (data.docs[0]) {
+          data.forEach((doc) => {
+            batch.update(db.doc(`/shrine/${doc.id}`), {
+              users: admin.firestore.FieldValue.arrayRemove(userId),
+              followers: admin.firestore.FieldValue.increment(-1),
+            });
+          });
+        }
+      });
+
     // get reference to deleted users archive collection
     const archRef = db.collection("deletedUsersArchive").doc(userId);
 
@@ -596,6 +613,187 @@ exports.onUserDeleted = functions
     });
 
     // commit
+    return batch.commit();
+  });
+
+// trigger for updating shrines collection with id of newly created user
+exports.onUserCreated = functions
+  .region("europe-west2")
+  .firestore.document("users/{id}")
+  .onCreate((snapshot, context) => {
+    const batch = db.batch();
+    const admin = require("firebase-admin");
+
+    // populate pinned shrines with new user id
+    // shrine 1
+    const shrine1Ref = db.collection("shrines").doc("t4TYS8lU7EPPrvWGsVT7");
+    batch.update(shrine1Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine2
+    const shrine2Ref = db.collection("shrines").doc("x8D6pc6vIk1ozRG73XRX");
+    batch.update(shrine2Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine3
+    const shrine3Ref = db.collection("shrines").doc("Qd5qTeyQ5yCnYePz9HYs");
+    batch.update(shrine3Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine 4
+    const shrine4Ref = db.collection("shrines").doc("G4zn8pWomBTFfpT9pDSk");
+    batch.update(shrine4Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine 5
+    const shrine5Ref = db.collection("shrines").doc("1c8FiHmEDDMl1qqoZhDO");
+    batch.update(shrine5Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine 6
+    const shrine6Ref = db.collection("shrines").doc("LZYPJnYiuBg3plJ2XK88");
+    batch.update(shrine6Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine 7
+    const shrine7Ref = db.collection("shrines").doc("eeGKpTw993mDLk9CZQU5");
+    batch.update(shrine7Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    //shrine 5
+    const shrine8Ref = db.collection("shrines").doc("NxxBIaM4NW5VKjzGuVIC");
+    batch.update(shrine8Ref, {
+      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
+      followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    // commit batch update to firebase
+    return batch.commit();
+  });
+
+// trigger for updated post
+exports.onPostUpdated = functions
+  .region("europe-west2")
+  .firestore.document("posts/{id}")
+  .onUpdate((change) => {
+    if (change.bafore.data().title !== change.after.data().title) {
+      console.log("post has changed");
+
+      //define client for algolia
+      const client = algoliasearch(
+        process.env.ALGOLIA_APP_ID,
+        process.env.ALGOLIA_API_KEY
+      );
+
+      // define post object
+      const post = {};
+
+      // get the post document's data
+      post.title = change.after.data().title;
+      post.slug = change.after.data().slug;
+      post.shrineName = change.after.data().shrineName;
+      post.postThumbnail = change.after.data().postThumbnail;
+
+      // add objectId field required by Algolia
+      post.objectID = change.after.id;
+
+      // write algolia index
+      const index = client.initIndex(process.env.ALGOLIA_INDEX_NAME);
+
+      // save algolia object;
+      index
+        .saveObject(post)
+        .then(() => {
+          console.log("Post Data updated to Algolia", objectID);
+        })
+        .catch((error) => {
+          console.error("Error when updating post data to Algolia", error);
+          process.exit(1);
+        });
+    }
+  });
+
+//trigger for ading and updating every associated document to the post once its created(likes, comments, post counts, saved posts)
+exports.onPostCreated = functions
+  .region("europe-west2")
+  .firestore.document("posts/{id}")
+  .onCreate((snapshot, context) => {
+    const batch = db.batch();
+    const admin = require("firebase-admin");
+
+    //define client for algolia
+    const client = algoliasearch(
+      process.env.ALGOLIA_APP_ID,
+      process.env.ALGOLIA_API_KEY
+    );
+
+    // define post object
+    const post = {};
+
+    // get the post document's data
+    post.title = snapshot.data().title;
+    post.slug = snapshot.data().slug;
+    post.shrineName = snapshot.data().shrineName;
+    post.categoryName = snapshot.data().categoryName;
+    post.username = snapshot.data().username;
+    post.postThumbnail = snapshot.data().postThumbnail;
+
+    // add objectId field required by Algolia
+    post.objectID = snapshot.id;
+
+    // write algolia index
+    const index = client.initIndex(process.env.ALGOLIA_INDEX_NAME);
+
+    // save algolia object;
+    index
+      .saveObject(post)
+      .then(() => {
+        console.log("Post Data added to Algolia", objectID);
+      })
+      .catch((error) => {
+        console.error("Error when adding post data to Algolia", error);
+        process.exit(1);
+      });
+
+    // update postMetrics collection
+    const postMetricsRef = db.doc(`/postsMetrics/count`);
+    batch.update(postMetricsRef, {
+      total: admin.firestore.FieldValue.increment(1),
+    });
+
+    //  users collection update
+    const userRef = db.doc(`/users/${snapshot.data().username}`);
+    batch.update(userRef, {
+      postCount: admin.firestore.FieldValue.increment(1),
+      vibrations: admin.firestore.FieldValue.increment(0.25),
+    });
+
+    // category collections update
+    const categoryRef = db.doc(`/category/${snapshot.data().categoryId}`);
+    batch.update(categoryRef, {
+      posts: admin.firestore.FieldValue.increment(1),
+    });
+
+    // shrine collections update
+    const shrineRef = db.doc(`/shrines/${snapshot.data().shrineId}`);
+    batch.update(shrineRef, {
+      posts: admin.firestore.FieldValue.increment(1),
+    });
+
     return batch.commit();
   });
 
@@ -726,185 +924,18 @@ exports.onPostDeleted = functions
                 });
 
                 return batch.commit();
+              })
+              .catch((err) => {
+                console.error(err);
               });
           })
           .catch((err) => {
             console.error(err);
           });
-      });
-  });
-
-// trigger for updating shrines collection with id of newly created user
-exports.onUserCreated = functions
-  .region("europe-west2")
-  .firestore.document("users/{id}")
-  .onCreate((snapshot, context) => {
-    const batch = db.batch();
-    const admin = require("firebase-admin");
-
-    // populate pinned shrines with new user id
-    // shrine 1
-    const shrine1Ref = db.collection("shrines").doc("t4TYS8lU7EPPrvWGsVT7");
-    batch.update(shrine1Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine2
-    const shrine2Ref = db.collection("shrines").doc("x8D6pc6vIk1ozRG73XRX");
-    batch.update(shrine2Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine3
-    const shrine3Ref = db.collection("shrines").doc("Qd5qTeyQ5yCnYePz9HYs");
-    batch.update(shrine3Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine 4
-    const shrine4Ref = db.collection("shrines").doc("G4zn8pWomBTFfpT9pDSk");
-    batch.update(shrine4Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine 5
-    const shrine5Ref = db.collection("shrines").doc("1c8FiHmEDDMl1qqoZhDO");
-    batch.update(shrine5Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine 6
-    const shrine6Ref = db.collection("shrines").doc("LZYPJnYiuBg3plJ2XK88");
-    batch.update(shrine6Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine 7
-    const shrine7Ref = db.collection("shrines").doc("eeGKpTw993mDLk9CZQU5");
-    batch.update(shrine7Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    //shrine 5
-    const shrine8Ref = db.collection("shrines").doc("NxxBIaM4NW5VKjzGuVIC");
-    batch.update(shrine8Ref, {
-      users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
-    });
-
-    // commit batch update to firebase
-    return batch.commit();
-  });
-
-// trigger for updated post
-exports.onPostUpdated = functions
-  .region("europe-west2")
-  .firestore.document("posts/{id}")
-  .onUpdate((change) => {
-    if (change.bafore.data().title !== change.after.data().title) {
-      console.log("post has changed");
-
-      //define client for algolia
-      const client = algoliasearch(
-        process.env.ALGOLIA_APP_ID,
-        process.env.ALGOLIA_API_KEY
-      );
-
-      // define post object
-      const post = {};
-
-      // get the post document's data
-      post.title = change.after.data().title;
-      post.slug = change.after.data().slug;
-      post.shrineName = change.after.data().shrineName;
-      post.postThumbnail = change.after.data().postThumbnail;
-
-      // add objectId field required by Algolia
-      post.objectID = change.after.id;
-
-      // write algolia index
-      const index = client.initIndex(process.env.ALGOLIA_INDEX_NAME);
-
-      // save algolia object;
-      index
-        .saveObject(post)
-        .then(() => {
-          console.log("Post Data updated to Algolia", objectID);
-        })
-        .catch((error) => {
-          console.error("Error when updating post data to Algolia", error);
-          process.exit(1);
-        });
-    }
-  });
-
-//trigger for ading and updating every associated document to the post once its created(likes, comments, post counts, saved posts)
-exports.onPostCreated = functions
-  .region("europe-west2")
-  .firestore.document("posts/{id}")
-  .onCreate((snapshot, context) => {
-    const batch = db.batch();
-    const admin = require("firebase-admin");
-
-    //define client for algolia
-    const client = algoliasearch(
-      process.env.ALGOLIA_APP_ID,
-      process.env.ALGOLIA_API_KEY
-    );
-
-    // define post object
-    const post = {};
-
-    // get the post document's data
-    post.title = snapshot.data().title;
-    post.slug = snapshot.data().slug;
-    post.shrineName = snapshot.data().shrineName;
-    post.categoryName = snapshot.data().categoryName;
-    post.username = snapshot.data().username;
-    post.postThumbnail = snapshot.data().postThumbnail;
-
-    // add objectId field required by Algolia
-    post.objectID = snapshot.id;
-
-    // write algolia index
-    const index = client.initIndex(process.env.ALGOLIA_INDEX_NAME);
-
-    // save algolia object;
-    index
-      .saveObject(post)
-      .then(() => {
-        console.log("Post Data added to Algolia", objectID);
       })
-      .catch((error) => {
-        console.error("Error when adding post data to Algolia", error);
-        process.exit(1);
+      .catch((err) => {
+        console.error(err);
       });
-
-    // update postMetrics collection
-    const postMetricsRef = db.doc(`/postsMetrics/count`);
-    batch.update(postMetricsRef, {
-      total: admin.firestore.FieldValue.increment(1),
-    });
-
-    //  users collection update
-    const userRef = db.doc(`/users/${snapshot.data().username}`);
-    batch.update(userRef, {
-      postCount: admin.firestore.FieldValue.increment(1),
-      vibrations: admin.firestore.FieldValue.increment(0.25),
-    });
-
-    // category collections update
-    const categoryRef = db.doc(`/category/${snapshot.data().categoryId}`);
-    batch.update(categoryRef, {
-      posts: admin.firestore.FieldValue.increment(1),
-    });
-
-    // shrine collections update
-    const shrineRef = db.doc(`/shrines/${snapshot.data().shrineId}`);
-    batch.update(shrineRef, {
-      posts: admin.firestore.FieldValue.increment(1),
-    });
-
-    return batch.commit();
   });
 
 // trigger for updating shrine followership and users field once shrine is created
