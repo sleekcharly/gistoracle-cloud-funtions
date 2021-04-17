@@ -602,10 +602,12 @@ exports.onUserDeleted = functions
       about: snapshot.data().about,
       username: snapshot.data().username,
       createdAt: snapshot.data().createdAt,
-      displayName: snapshot.data().displayName,
+      displayName: snapshot.data().displayName
+        ? snapshot.data().displayName
+        : "",
       email: snapshot.data().email,
       imageUrl: snapshot.data().imageUrl,
-      location: snapshot.data().location,
+      location: snapshot.data().location ? snapshot.data().location : {},
       postCount: snapshot.data().postCount,
       vibrations: snapshot.data().vibrations,
       email: snapshot.data().email,
