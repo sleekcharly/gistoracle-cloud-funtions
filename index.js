@@ -315,44 +315,44 @@ app.get("/user/:username", getUserDetails);
 exports.g = functions.region("europe-west2").https.onRequest(app);
 
 // update all post documets on algolia
-exports.addPostdataToAlgolia = functions.https.onRequest((req, res) => {
-  var arr = [];
+// exports.addPostdataToAlgolia = functions.https.onRequest((req, res) => {
+//   var arr = [];
 
-  const ALGOLIA_APP_ID = process.env.ALGOLIA_APP_ID;
-  const ALGOLIA_ADMIN_KEY = process.env.ALGOLIA_API_KEY;
-  const ALGOLIA_INDEX_NAME = "posts";
+//   const ALGOLIA_APP_ID = process.env.ALGOLIA_APP_ID;
+//   const ALGOLIA_ADMIN_KEY = process.env.ALGOLIA_API_KEY;
+//   const ALGOLIA_INDEX_NAME = "posts";
 
-  console.log(ALGOLIA_ADMIN_KEY);
+//   console.log(ALGOLIA_ADMIN_KEY);
 
-  db.collection("posts")
-    .get()
-    .then((data) => {
-      data.forEach((doc) => {
-        let post = {};
-        post.objectID = doc.id;
-        post.title = doc.data().title;
-        post.slug = doc.data().slug;
-        post.shrineName = doc.data().shrineName;
-        post.categoryName = doc.data().categoryName;
-        post.username = doc.data().username;
-        post.postThumbnail = doc.data().postThumbnail;
+//   db.collection("posts")
+//     .get()
+//     .then((data) => {
+//       data.forEach((doc) => {
+//         let post = {};
+//         post.objectID = doc.id;
+//         post.title = doc.data().title;
+//         post.slug = doc.data().slug;
+//         post.shrineName = doc.data().shrineName;
+//         post.categoryName = doc.data().categoryName;
+//         post.username = doc.data().username;
+//         post.postThumbnail = doc.data().postThumbnail;
 
-        arr.push(post);
-      });
+//         arr.push(post);
+//       });
 
-      //define client for algolia
-      var client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_ADMIN_KEY);
+//       //define client for algolia
+//       var client = algoliasearch(ALGOLIA_APP_ID, ALGOLIA_ADMIN_KEY);
 
-      var index = client.initIndex(ALGOLIA_INDEX_NAME);
+//       var index = client.initIndex(ALGOLIA_INDEX_NAME);
 
-      return index.saveObjects(arr, function (err, content) {
-        console.log(content);
-      });
-    })
-    .catch((err) => {
-      console.error(err);
-    });
-});
+//       return index.saveObjects(arr, function (err, content) {
+//         console.log(content);
+//       });
+//     })
+//     .catch((err) => {
+//       console.error(err);
+//     });
+// });
 
 /* Section for database triggers on the firestore */
 
@@ -364,6 +364,13 @@ exports.onUserImageChange = functions
     if (change.before.data().imageUrl !== change.after.data().imageUrl) {
       console.log("Image has changed");
       const batch = db.batch();
+
+      // delet user image from storage bucket
+      const userImage = change.before
+        .data()
+        .imageUrl.match(/[\w-]+\.(jpg|png|gif|jpeg)/g);
+
+      admin.storage().bucket().file(userImage).delete();
 
       return db
         .collection("comments")
@@ -515,7 +522,8 @@ exports.onUserDeleted = functions
 
     //perform filtering and update operations
     // for comment Likes
-    db.collection("commentLikes")
+    return db
+      .collection("commentLikes")
       .where("username", "==", username)
       .get()
       .then((data) => {
@@ -525,97 +533,120 @@ exports.onUserDeleted = functions
             batch.delete(db.doc(`/commentLikes/${doc.id}`));
           });
         }
+
+        // for postLikes
+        return db
+          .collection("postLikes")
+          .where("username", "==", username)
+          .get()
+          .then((data) => {
+            // delete postlikes docs that match username
+            if (data.docs[0]) {
+              data.forEach((doc) => {
+                batch.delete(db.doc(`/postLikes/${doc.id}`));
+              });
+            }
+
+            // for saved posts
+            return db
+              .collection("savedPosts")
+              .where("username", "==", username)
+              .get()
+              .then((data) => {
+                //delete saved posts that match
+                if (data.docs[0]) {
+                  data.forEach((doc) => {
+                    batch.delete(db.doc(`/savedPosts/${doc.id}`));
+                  });
+                }
+
+                // for shrine follows
+                return db
+                  .collection("shrineFollows")
+                  .where("userId", "==", userId)
+                  .get()
+                  .then((data) => {
+                    // delete if that match userId
+                    if (data.docs[0]) {
+                      data.forEach((doc) => {
+                        batch.delete(db.doc(`/shrineFollows/${doc.id}`));
+                      });
+                    }
+
+                    // for shrine collection users array
+                    return db
+                      .collection("shrines")
+                      .where("users", "array-contains", userId)
+                      .get()
+                      .then((data) => {
+                        if (data.docs[0]) {
+                          data.forEach((doc) => {
+                            batch.update(db.doc(`/shrines/${doc.id}`), {
+                              users: admin.firestore.FieldValue.arrayRemove(
+                                userId
+                              ),
+                              followers: admin.firestore.FieldValue.increment(
+                                -1
+                              ),
+                            });
+                          });
+                        }
+
+                        // get reference to deleted users archive collection
+                        const archRef = db
+                          .collection("deletedUsersArchive")
+                          .doc(userId);
+
+                        // set document
+                        batch.set(archRef, {
+                          userId: userId,
+                          about: snapshot.data().about,
+                          username: snapshot.data().username,
+                          createdAt: snapshot.data().createdAt,
+                          displayName: snapshot.data().displayName
+                            ? snapshot.data().displayName
+                            : "",
+                          email: snapshot.data().email,
+                          imageUrl: snapshot.data().imageUrl,
+                          location: snapshot.data().location
+                            ? snapshot.data().location
+                            : {},
+                          postCount: snapshot.data().postCount,
+                          vibrations: snapshot.data().vibrations,
+                          email: snapshot.data().email,
+                          deletedAt: new Date().toISOString(),
+                        });
+
+                        // appmetrics update
+                        const appMetricsRef = db
+                          .collection("appMetrics")
+                          .doc("stats");
+                        batch.update(appMetricsRef, {
+                          registeredUsers: admin.firestore.FieldValue.increment(
+                            -1
+                          ),
+                          loggedIn: admin.firestore.FieldValue.increment(-1),
+                        });
+
+                        // commit
+                        return batch.commit();
+                      });
+                  })
+                  .catch((err) => {
+                    console.error(err);
+                  });
+              })
+              .catch((err) => {
+                console.error(err);
+              });
+          })
+          .catch((err) => {
+            console.error(err);
+          });
       })
       .catch((err) => {
         console.error(err);
       });
-
-    // for postLikes
-    db.collection("postLikes")
-      .where("username", "==", username)
-      .get()
-      .then((data) => {
-        // delete postlikes docs that match username
-        if (data.docs[0]) {
-          data.forEach((doc) => {
-            batch.delete(db.doc(`/postLikes/${doc.id}`));
-          });
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-
-    // for saved posts
-    db.collection("savedPosts")
-      .where("username", "==", username)
-      .get()
-      .then((data) => {
-        //delete saved posts that match
-        if (data.docs[0]) {
-          data.forEach((doc) => {
-            batch.delete(db.doc(`/savedPosts/${doc.id}`));
-          });
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-
-    // for shrine follows
-    db.collection("shrineFollows")
-      .where("userId", "==", userId)
-      .get()
-      .then((data) => {
-        // delete if that match userId
-        if (data.docs[0]) {
-          data.forEach((doc) => {
-            batch.delete(db.doc(`/shrineFollows/${doc.id}`));
-          });
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-
-    // for shrine collection users array
-    db.collection("shrines")
-      .where("userId", "array-contains", userId)
-      .get()
-      .then((data) => {
-        if (data.docs[0]) {
-          data.forEach((doc) => {
-            batch.update(db.doc(`/shrine/${doc.id}`), {
-              users: admin.firestore.FieldValue.arrayRemove(userId),
-              followers: admin.firestore.FieldValue.increment(-1),
-            });
-          });
-        }
-      });
-
-    // get reference to deleted users archive collection
-    const archRef = db.collection("deletedUsersArchive").doc(userId);
-
-    // set document
-    batch.set(archRef, {
-      userId: userId,
-      about: snapshot.data().about,
-      username: snapshot.data().username,
-      createdAt: snapshot.data().createdAt,
-      displayName: snapshot.data().displayName
-        ? snapshot.data().displayName
-        : "",
-      email: snapshot.data().email,
-      imageUrl: snapshot.data().imageUrl,
-      location: snapshot.data().location ? snapshot.data().location : {},
-      postCount: snapshot.data().postCount,
-      vibrations: snapshot.data().vibrations,
-      email: snapshot.data().email,
-      deletedAt: new Date().toISOString(),
-    });
-
-    // commit
-    return batch.commit();
   });
 
 // trigger for updating shrines collection with id of newly created user
@@ -681,6 +712,13 @@ exports.onUserCreated = functions
     batch.update(shrine8Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
       followers: admin.firestore.FieldValue.increment(1),
+    });
+
+    // appmetrics update
+    const appMetricsRef = db.collection("appMetrics").doc("stats");
+    batch.update(appMetricsRef, {
+      registeredUsers: admin.firestore.FieldValue.increment(1),
+      loggedIn: admin.firestore.FieldValue.increment(1),
     });
 
     // commit batch update to firebase
@@ -981,6 +1019,12 @@ exports.onShrineCreated = functions
           shrines: admin.firestore.FieldValue.increment(1),
         });
 
+        // appmetrics update
+        const appMetricsRef = db.collection("appMetrics").doc("stats");
+        batch.update(appMetricsRef, {
+          totalShrines: admin.firestore.FieldValue.increment(1),
+        });
+
         return db
           .collection("shrineFollows")
           .add({ shrineId: snapshot.id, userId: userData[0].userId });
@@ -1023,6 +1067,12 @@ exports.onShrineDeleted = functions
         const categoryRef = db.doc(`/category/${snapshot.data().categoryId}`);
         batch.update(categoryRef, {
           shrines: admin.firestore.FieldValue.increment(-1),
+        });
+
+        // appmetrics update
+        const appMetricsRef = db.collection("appMetrics").doc("stats");
+        batch.update(appMetricsRef, {
+          totalShrines: admin.firestore.FieldValue.increment(-1),
         });
 
         return db

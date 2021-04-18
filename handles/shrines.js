@@ -113,37 +113,55 @@ exports.createShrine = (req, res) => {
 
   if (!valid) return res.status(400).json(errors);
 
-  // get attach category id
   return db
-    .collection("category")
-    .where("name", "==", newShrine.categoryName)
+    .collection("shrines")
+    .where("name", "==", newShrine.name)
     .limit(1)
     .get()
     .then((data) => {
-      let categoryId = [];
-      data.forEach((doc) => {
-        categoryId.push(doc.id);
-      });
+      if (data.docs[0]) {
+        return res
+          .status(400)
+          .json({ shrineName: "This name is already taken" });
+      } else {
+        // get attach category id
+        return db
+          .collection("category")
+          .where("name", "==", newShrine.categoryName)
+          .limit(1)
+          .get()
+          .then((data) => {
+            let categoryId = [];
+            data.forEach((doc) => {
+              categoryId.push(doc.id);
+            });
 
-      newShrine.categoryId = categoryId[0];
+            newShrine.categoryId = categoryId[0];
 
-      // get shrines collection from database
-      return (
-        db
-          .collection("shrines")
-          .add(newShrine)
-          .then((doc) => {
-            const resShrine = newShrine;
-            resShrine.shrineId = doc.id;
+            // get shrines collection from database
+            return (
+              db
+                .collection("shrines")
+                .add(newShrine)
+                .then((doc) => {
+                  const resShrine = newShrine;
+                  resShrine.shrineId = doc.id;
 
-            return res.json(resShrine);
+                  return res.json(resShrine);
+                })
+                // catch any errors
+                .catch((err) => {
+                  console.error(err);
+                  return res
+                    .status(500)
+                    .json({ error: "something went wrong" });
+                })
+            );
           })
-          // catch any errors
           .catch((err) => {
             console.error(err);
-            return res.status(500).json({ error: "something went wrong" });
-          })
-      );
+          });
+      }
     })
     .catch((err) => {
       console.error(err);
