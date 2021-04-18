@@ -318,6 +318,24 @@ exports.login = (req, res) => {
     });
 };
 
+// callbacks for updating login information
+exports.setLogin = (req, res) => {
+  const appMetrics = db.collection("appMetrics").doc("stats");
+
+  return appMetrics.update({
+    loggedIn: admin.firestore.FieldValue.increment(1),
+  });
+};
+
+exports.setLogout = (req, res) => {
+  const appMetrics = db.collection("appMetrics").doc("stats");
+
+  return appMetrics.update({
+    loggedIn: admin.firestore.FieldValue.increment(-1),
+  });
+};
+// end of updating login information callbacks
+
 // callback function for checking valid password
 exports.checkPassword = async (req, res) => {
   // set credentials

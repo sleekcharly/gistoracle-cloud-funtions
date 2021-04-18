@@ -94,6 +94,8 @@ const {
   editProfile,
   checkEmailExists,
   deleteUser,
+  setLogin,
+  setLogout,
 } = require("./handles/users");
 const { db, admin } = require("./util/admin");
 
@@ -310,6 +312,10 @@ app.get("/userPageInfo/:username", getProfileCredentials);
 
 // route for getting details of a user
 app.get("/user/:username", getUserDetails);
+
+// route for authentication database metrics
+app.get("/setLoggedIn", setLogin);
+app.get("/setLoggedOut", setLogout);
 
 // Do this to ensure the route endpoints begin with /g
 exports.g = functions.region("europe-west2").https.onRequest(app);
