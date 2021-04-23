@@ -12,11 +12,20 @@ var serviceAccount =
     ? require("../gistoracle-28360-firebase-adminsdk-ewftv-9107d0cc69")
     : require("../gistoracle-dev-firebase-adminsdk-4qg56-ce04c6150b.json");
 
+// set environment
+const environment = process.env.NODE_ENV;
+
 // intializing the application to use the admin SDK
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: process.env.FIREBASE_DEVELOPMENT_STORAGE_BUCKET,
-  databaseURL: process.env.FIREBASE_DEVELOPMENT_DATABASE_URL,
+  storageBucket:
+    environment === "production"
+      ? process.env.FIREBASE_STORAGE_BUCKET
+      : process.env.FIREBASE_DEVELOPMENT_STORAGE_BUCKET,
+  databaseURL:
+    environment === "production"
+      ? process.env.FIREBASE_DATABASE_URL
+      : process.env.FIREBASE_DEVELOPMENT_DATABASE_URL,
 });
 
 // instantiate the firebase store
