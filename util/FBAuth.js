@@ -36,7 +36,7 @@ module.exports = (req, res, next) => {
     .then((data) => {
       req.user.username = data.docs[0].data().username;
       req.user.imageUrl = data.docs[0].data().imageUrl;
-      req.user.vibrations = data.docs[0].data().karma;
+      req.user.vibrations = data.docs[0].data().vibrations;
       req.user.categories = data.docs[0].data().categories;
       req.user.userId = data.docs[0].data().userId;
       req.user.location = data.docs[0].data().location;

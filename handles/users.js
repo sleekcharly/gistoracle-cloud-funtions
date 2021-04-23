@@ -322,17 +322,25 @@ exports.login = (req, res) => {
 exports.setLogin = (req, res) => {
   const appMetrics = db.collection("appMetrics").doc("stats");
 
-  return appMetrics.update({
+  appMetrics.update({
     loggedIn: admin.firestore.FieldValue.increment(1),
   });
+
+  console.log("User login stat updated");
+
+  return res.json("User login stat updated");
 };
 
 exports.setLogout = (req, res) => {
   const appMetrics = db.collection("appMetrics").doc("stats");
 
-  return appMetrics.update({
+  appMetrics.update({
     loggedIn: admin.firestore.FieldValue.increment(-1),
   });
+
+  console.log("User login stat updated");
+
+  return res.json("User Login stat updated");
 };
 // end of updating login information callbacks
 

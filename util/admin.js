@@ -7,7 +7,10 @@ const admin = require("firebase-admin");
 /*Your Firebase service account can be used to authenticate 
 multiple Firebase features, such as Database, Storage and
  Auth, programmatically via the unified Admin SDK */
-var serviceAccount = require("../gistoracle-28360-firebase-adminsdk-ewftv-9107d0cc69");
+var serviceAccount =
+  process.env.NODE_ENV === "production"
+    ? require("../gistoracle-28360-firebase-adminsdk-ewftv-9107d0cc69")
+    : require("../gistoracle-dev-firebase-adminsdk-4qg56-ce04c6150b.json");
 
 // intializing the application to use the admin SDK
 admin.initializeApp({
