@@ -15,8 +15,8 @@ var serviceAccount =
 // intializing the application to use the admin SDK
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  databaseURL: process.env.FIREBASE_DATABASE_URL,
+  storageBucket: process.env.FIREBASE_DEVELOPMENT_STORAGE_BUCKET,
+  databaseURL: process.env.FIREBASE_DEVELOPMENT_DATABASE_URL,
 });
 
 // instantiate the firebase store
