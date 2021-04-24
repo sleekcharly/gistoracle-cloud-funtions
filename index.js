@@ -761,7 +761,7 @@ exports.onPostUpdated = functions
       const index = client.initIndex(process.env.ALGOLIA_INDEX_NAME);
 
       // save algolia object;
-      index
+      return index
         .saveObject(post)
         .then(() => {
           console.log("Post Data updated to Algolia", objectID);
@@ -1112,7 +1112,7 @@ exports.deleteShrineAvatarOnshrineUpdate = functions
         .data()
         .avatar.match(/[\w-]+\.(jpg|png|gif|jpeg)/g);
 
-      admin.storage().bucket().file(avatarFile).delete();
+      return admin.storage().bucket().file(avatarFile).delete();
     }
   });
 
@@ -1128,6 +1128,6 @@ exports.deletePostThumbnailOnPostUpdate = functions
         .data()
         .postThumbnail.match(/[\w-]+\.(jpg|png|gif|jpeg)/g);
 
-      admin.storage().bucket().file(thumbnailFile).delete();
+      return admin.storage().bucket().file(thumbnailFile).delete();
     }
   });

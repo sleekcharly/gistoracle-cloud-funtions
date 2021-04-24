@@ -586,6 +586,7 @@ exports.uploadShrineAvatar = (req, res) => {
             },
           })
           .then(() => {
+            console.log("avatar uploadeds");
             // update shrine avatar in shrine document
             return db
               .collection("shrines")
@@ -594,6 +595,7 @@ exports.uploadShrineAvatar = (req, res) => {
               .get();
           })
           .then((data) => {
+            console.log(config.storageBucket);
             const shrineAvatar = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${resizedImageFileName}?alt=media`;
 
             let shrineId = [];
