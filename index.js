@@ -663,7 +663,10 @@ exports.onUserCreated = functions
     const batch = db.batch();
     const admin = require("firebase-admin");
 
-    // populate pinned shrines with new user id
+    {
+      /*populate pinned shrines with new user id */
+    }
+    // *************shrine1*****************
     // shrine 1
     const shrine1Ref = db.collection("shrines").doc("t4TYS8lU7EPPrvWGsVT7");
     batch.update(shrine1Ref, {
@@ -671,6 +674,17 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
+    //shrineFollow 1
+    const shrineFollowRef1 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}1`);
+    batch.set(shrineFollowRef1, {
+      userId: snapshot.data().userId,
+      shrineId: "t4TYS8lU7EPPrvWGsVT7",
+    });
+    // *************shrine1 end**************
+
+    // *************shrine2*****************
     //shrine2
     const shrine2Ref = db.collection("shrines").doc("x8D6pc6vIk1ozRG73XRX");
     batch.update(shrine2Ref, {
@@ -678,6 +692,17 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
+    //shrineFollow 2
+    const shrineFollowRef2 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}2`);
+    batch.set(shrineFollowRef2, {
+      userId: snapshot.data().userId,
+      shrineId: "x8D6pc6vIk1ozRG73XRX",
+    });
+    // *************shrine2 end************
+
+    // ************shrine3******************
     //shrine3
     const shrine3Ref = db.collection("shrines").doc("Qd5qTeyQ5yCnYePz9HYs");
     batch.update(shrine3Ref, {
@@ -685,6 +710,17 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
+    //shrineFollow 3
+    const shrineFollowRef3 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}3`);
+    batch.set(shrineFollowRef3, {
+      userId: snapshot.data().userId,
+      shrineId: "Qd5qTeyQ5yCnYePz9HYs",
+    });
+    // **************shrine3 end***************
+
+    // *************shrine4******************
     //shrine 4
     const shrine4Ref = db.collection("shrines").doc("G4zn8pWomBTFfpT9pDSk");
     batch.update(shrine4Ref, {
@@ -692,6 +728,17 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
+    //shrineFollow 4
+    const shrineFollowRef4 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}4`);
+    batch.set(shrineFollowRef4, {
+      userId: snapshot.data().userId,
+      shrineId: "G4zn8pWomBTFfpT9pDSk",
+    });
+    // **********shrine4 end********************
+
+    // ***********shrine5*****************
     //shrine 5
     const shrine5Ref = db.collection("shrines").doc("1c8FiHmEDDMl1qqoZhDO");
     batch.update(shrine5Ref, {
@@ -699,6 +746,17 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
+    //shrineFollow 5
+    const shrineFollowRef5 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}5`);
+    batch.set(shrineFollowRef5, {
+      userId: snapshot.data().userId,
+      shrineId: "1c8FiHmEDDMl1qqoZhDO",
+    });
+    // *********shrine 5 end*******************
+
+    // **********shrine6*****************
     //shrine 6
     const shrine6Ref = db.collection("shrines").doc("LZYPJnYiuBg3plJ2XK88");
     batch.update(shrine6Ref, {
@@ -706,6 +764,17 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
+    //shrineFollow 6
+    const shrineFollowRef6 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}6`);
+    batch.set(shrineFollowRef6, {
+      userId: snapshot.data().userId,
+      shrineId: "LZYPJnYiuBg3plJ2XK88",
+    });
+    // **************shrine6 end***************
+
+    // ***********shrine7****************
     //shrine 7
     const shrine7Ref = db.collection("shrines").doc("eeGKpTw993mDLk9CZQU5");
     batch.update(shrine7Ref, {
@@ -713,12 +782,33 @@ exports.onUserCreated = functions
       followers: admin.firestore.FieldValue.increment(1),
     });
 
-    //shrine 5
+    //shrineFollow 7
+    const shrineFollowRef7 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}7`);
+    batch.set(shrineFollowRef7, {
+      userId: snapshot.data().userId,
+      shrineId: "eeGKpTw993mDLk9CZQU5",
+    });
+    // *************shrine7 end*****************
+
+    // **************shrine8**************
+    //shrine 8
     const shrine8Ref = db.collection("shrines").doc("NxxBIaM4NW5VKjzGuVIC");
     batch.update(shrine8Ref, {
       users: admin.firestore.FieldValue.arrayUnion(snapshot.data().userId),
       followers: admin.firestore.FieldValue.increment(1),
     });
+
+    //shrineFollow 8
+    const shrineFollowRef8 = db
+      .collection("shrineFollows")
+      .doc(`${snapshot.data().userId}8`);
+    batch.set(shrineFollowRef8, {
+      userId: snapshot.data().userId,
+      shrineId: "NxxBIaM4NW5VKjzGuVIC",
+    });
+    // *************shrine8 end*************
 
     // appmetrics update
     const appMetricsRef = db.collection("appMetrics").doc("stats");
