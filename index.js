@@ -1113,6 +1113,8 @@ exports.deleteShrineAvatarOnshrineUpdate = functions
         .avatar.match(/[\w-]+\.(jpg|png|gif|jpeg)/g);
 
       return admin.storage().bucket().file(avatarFile).delete();
+    } else {
+      return null;
     }
   });
 
