@@ -7,7 +7,6 @@ let request = require("request");
 
 // fetch all posts from database
 exports.getAllPosts = async (req, res) => {
-  console.log(process.env.ALGOLIA_INDEX_NAME);
   // define orderBy parameter
   let filter = "";
 
@@ -108,7 +107,6 @@ exports.getTotalPostsCount = (req, res) => {
     .get()
     .then((doc) => {
       if (doc.exists) {
-        console.log("Document data:", doc.data());
         return res.json(doc.data().total);
       } else {
         console.log("no such document!");
@@ -194,27 +192,6 @@ exports.getTailoredUserPost = async (req, res) => {
   });
 
   return res.json(posts);
-
-  /*2nd Method*/
-  // original query!!, didnt work due to firebase restrictions on query limits, workaround implemented above.
-
-  //   const shrines = req.user.shrines;
-
-  //   db.collection("posts")
-  //     .where("shrineId", "in", shrines.slice(0, 9))
-  //     .orderBy("createdAt", "desc")
-  //     .get()
-  //     .then((data) => {
-  //       let posts = [];
-  //       data.forEach((doc) => {
-  //         posts.push({
-  //           postId: doc.id,
-  //           ...doc.data(),
-  //         });
-  //       });
-  //       return res.json(posts);
-  //     })
-  //     .catch((err) => console.error(err));
 };
 
 //get all posts Ids based on user's categories and shrines
@@ -290,7 +267,6 @@ exports.getNextTailoredUserPost = async (req, res) => {
           postId: doc.id,
           ...doc.data(),
         });
-        console.log(doc.data());
       });
     });
   }
@@ -718,6 +694,7 @@ exports.commentOnPost = (req, res) => {
     body: req.body.body,
     createdAt: new Date().toISOString(),
     postId: req.params.postId,
+    commentPostId: req.params.postId,
     username: req.user.username,
     userImage: req.user.imageUrl,
     likes: 0,
@@ -763,6 +740,9 @@ exports.commentOnPost = (req, res) => {
 
 // callback function for commenting on comments
 exports.commentOnComment = (req, res) => {
+  // initiate batch
+  const batch = db.batch();
+
   if (req.body.body === "")
     return res.status(400).json({
       commentReply: "Must not be empty",
@@ -772,6 +752,7 @@ exports.commentOnComment = (req, res) => {
     body: req.body.body,
     createdAt: new Date().toISOString(),
     commentId: req.params.commentId,
+    commentPostId: req.body.commentPostId,
     username: req.user.username,
     userImage: req.user.imageUrl,
     likes: 0,
@@ -784,9 +765,6 @@ exports.commentOnComment = (req, res) => {
       if (!doc.exists) {
         return res.status(404).json({ error: "Comment not found" });
       }
-      return doc.ref.update({ comments: doc.data().comments + 1 });
-    })
-    .then(() => {
       return db.collection("comments").add(newCommentOnComment);
     })
     .then(() => {
@@ -803,10 +781,25 @@ exports.commentOnComment = (req, res) => {
         userId.push(doc.id);
       });
 
-      const userRef = db.doc(`/users/${userId[0]}`);
-      userRef.update({ vibrations: admin.firestore.FieldValue.increment(0.2) });
+      const commentRef = db.doc(`/comments/${req.params.commentId}`);
+      batch.update(commentRef, {
+        comments: admin.firestore.FieldValue.increment(1),
+      });
 
-      res.json(newCommentOnComment);
+      const userRef = db.doc(`/users/${userId[0]}`);
+      batch.update(userRef, {
+        vibrations: admin.firestore.FieldValue.increment(0.2),
+      });
+
+      const postRef = db.doc(`/posts/${req.body.commentPostId}`);
+      batch.update(postRef, {
+        commentCount: admin.firestore.FieldValue.increment(1),
+      });
+
+      return batch.commit();
+    })
+    .then(() => {
+      return res.json(newCommentOnComment);
     })
     .catch((err) => {
       console.log(err);
@@ -1185,7 +1178,6 @@ exports.shortenUrl = (req, res) => {
     apikey: "03a31668b48f46578b1a52aba29189f2",
   };
 
-  console.log(req.data);
   request(
     {
       uri: "https://api.rebrandly.com/v1/links",
