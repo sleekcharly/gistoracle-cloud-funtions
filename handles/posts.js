@@ -615,25 +615,37 @@ exports.getPost = (req, res) => {
       postData = doc.data();
       postData.postId = doc.id;
 
-      // return comments collection
-      return db
-        .collection("comments")
-        .orderBy("createdAt", "desc")
-        .where("postId", "==", req.params.postId)
-        .get();
-    })
-    .then((data) => {
-      // define post comment variable
-      postData.comments = [];
-      data.forEach((doc) => {
-        postData.comments.push({ commentId: doc.id, ...doc.data() });
-      });
       return res.json(postData);
     })
     // log errors on the console
     .catch((err) => {
       console.error(err);
       res.status(500).json({ error: err.code });
+    });
+};
+
+// fetch a post's comments
+exports.getPostComments = (req, res) => {
+  // retrieve comments
+  db.collection("comments")
+    .orderBy("createdAt", "desc")
+    .where("postId", "==", req.params.postId)
+    .get()
+    .then((data) => {
+      let comments = [];
+
+      data.forEach((doc) => {
+        comments.push({
+          commentId: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      return res.json(comments);
+    })
+    .catch((err) => {
+      console.error(err);
+      console.log(err.message);
     });
 };
 

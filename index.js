@@ -47,6 +47,7 @@ const {
   getUserSavedPosts,
   getNextSavedPosts,
   editPost,
+  getPostComments,
 } = require("./handles/posts");
 
 const {
@@ -164,6 +165,9 @@ app.post("/editPost", FBAuth, editPost);
 
 // route for getting a single post
 app.get("/post/:postId", getPost);
+
+// route for getting a post comments
+app.get("/postComments/:postId", getPostComments);
 
 // get replies to a  particular comment
 app.get("/replies/:commentId", getReplies);
