@@ -97,6 +97,7 @@ const {
   deleteUser,
   setLogin,
   setLogout,
+  submitReport,
 } = require("./handles/users");
 const { db, admin } = require("./util/admin");
 
@@ -320,6 +321,9 @@ app.get("/user/:username", getUserDetails);
 // route for authentication database metrics
 app.get("/setLoggedIn", setLogin);
 app.get("/setLoggedOut", setLogout);
+
+// route for submitting reports
+app.post("/submitReport", submitReport);
 
 // Do this to ensure the route endpoints begin with /g
 exports.g = functions.region("europe-west2").https.onRequest(app);

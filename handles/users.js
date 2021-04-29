@@ -477,6 +477,22 @@ exports.editProfile = (req, res) => {
     });
 };
 
+// callback function for submiting reports
+exports.submitReport = (req, res) => {
+  let reportDetails = req.body;
+
+  return db
+    .collection("reports")
+    .add(reportDetails)
+    .then((doc) => {
+      console.log("Report submitted with ID: ", doc.id);
+      return res.json("Report submitted successfully");
+    })
+    .catch((err) => {
+      console.error("Error submittin report: ", err.message);
+    });
+};
+
 // callback function for adding or editing user profile details
 exports.addUserDetails = (req, res) => {
   let userDetails = reduceUserDetails(req.body);
