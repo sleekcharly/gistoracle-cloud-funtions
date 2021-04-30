@@ -328,6 +328,30 @@ app.post("/submitReport", submitReport);
 // Do this to ensure the route endpoints begin with /g
 exports.g = functions.region("europe-west2").https.onRequest(app);
 
+// update all shrine collection documents
+exports.addlatestPostCreatedTimestamp = functions.https.onRequest(
+  (req, res) => {
+    const batch = db.batch();
+
+    return db
+      .collection("shrines")
+      .get()
+      .then((data) => {
+        data.forEach((doc) => {
+          let docRef = db.collection("shrines").doc(doc.id);
+          batch.update(docRef, {
+            latestPostCreation: new Date().toISOString(),
+          });
+        });
+
+        return batch.commit();
+      })
+      .catch((err) => {
+        console.log(err.message);
+      });
+  }
+);
+
 // update all post documets on algolia
 // exports.addPostdataToAlgolia = functions.https.onRequest((req, res) => {
 //   var arr = [];
@@ -936,6 +960,7 @@ exports.onPostCreated = functions
     const shrineRef = db.doc(`/shrines/${snapshot.data().shrineId}`);
     batch.update(shrineRef, {
       posts: admin.firestore.FieldValue.increment(1),
+      latestPostCreation: new Date().toISOString(),
     });
 
     return batch.commit();

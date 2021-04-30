@@ -205,7 +205,7 @@ exports.editShrineDetails = (req, res) => {
 exports.getUserSubscribedShrines = (req, res) => {
   db.collection("shrines")
     .where("users", "array-contains", req.user.userId)
-    .orderBy("name")
+    .orderBy("latestPostCreation", "desc")
     .get()
     .then((data) => {
       let shrines = [];
