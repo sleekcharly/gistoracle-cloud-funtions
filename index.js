@@ -329,28 +329,28 @@ app.post("/submitReport", submitReport);
 exports.g = functions.region("europe-west2").https.onRequest(app);
 
 // update all shrine collection documents
-exports.addlatestPostCreatedTimestamp = functions.https.onRequest(
-  (req, res) => {
-    const batch = db.batch();
+// exports.addlatestPostCreatedTimestamp = functions.https.onRequest(
+//   (req, res) => {
+//     const batch = db.batch();
 
-    return db
-      .collection("shrines")
-      .get()
-      .then((data) => {
-        data.forEach((doc) => {
-          let docRef = db.collection("shrines").doc(doc.id);
-          batch.update(docRef, {
-            latestPostCreation: new Date().toISOString(),
-          });
-        });
+//     return db
+//       .collection("shrines")
+//       .get()
+//       .then((data) => {
+//         data.forEach((doc) => {
+//           let docRef = db.collection("shrines").doc(doc.id);
+//           batch.update(docRef, {
+//             latestPostCreation: new Date().toISOString(),
+//           });
+//         });
 
-        return batch.commit();
-      })
-      .catch((err) => {
-        console.log(err.message);
-      });
-  }
-);
+//         return batch.commit();
+//       })
+//       .catch((err) => {
+//         console.log(err.message);
+//       });
+//   }
+// );
 
 // update all post documets on algolia
 // exports.addPostdataToAlgolia = functions.https.onRequest((req, res) => {
@@ -1212,10 +1212,28 @@ exports.onShrineDeleted = functions
             data.forEach((doc) => {
               batch.delete(db.doc(`/shrineFollows/${doc.id}`));
             });
+
+            return db
+              .collection("posts")
+              .where("shrineId", "==", snapshot.id)
+              .get()
+              .then((data) => {
+                data.forEach((doc) => {
+                  batch.delete(db.doc(`/posts/${doc.id}`));
+                });
+              })
+              .catch((err) => {
+                console.error(err);
+                console.log(err.message);
+              });
+          })
+          .catch((err) => {
+            console.error(err);
+            console.log(err.message);
           });
       })
       .then(() => {
-        batch.commit();
+        return batch.commit();
       })
       .catch((err) => {
         console.error(err);
