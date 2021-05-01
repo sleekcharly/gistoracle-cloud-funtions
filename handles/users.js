@@ -522,6 +522,27 @@ exports.addUserDetails = (req, res) => {
     });
 };
 
+// get top users
+exports.getTopOracles = (req, res) => {
+  let oracles = [];
+
+  return db
+    .collection("users")
+    .orderBy("vibrations", "desc")
+    .limit(5)
+    .get()
+    .then((data) => {
+      data.forEach((doc) => {
+        oracles.push(doc.data());
+      });
+
+      return res.json(oracles);
+    })
+    .catch((err) => {
+      console.log(err.message);
+    });
+};
+
 // Get user's details
 exports.getUserDetails = (req, res) => {
   let userData = {};

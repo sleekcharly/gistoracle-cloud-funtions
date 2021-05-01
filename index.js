@@ -98,6 +98,7 @@ const {
   setLogin,
   setLogout,
   submitReport,
+  getTopOracles,
 } = require("./handles/users");
 const { db, admin } = require("./util/admin");
 
@@ -317,6 +318,9 @@ app.get("/userPageInfo/:username", getProfileCredentials);
 
 // route for getting details of a user
 app.get("/user/:username", getUserDetails);
+
+// route for getting to user
+app.get("/topOracles", getTopOracles);
 
 // route for authentication database metrics
 app.get("/setLoggedIn", setLogin);
