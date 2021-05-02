@@ -413,7 +413,7 @@ exports.onUserImageChange = functions
         .imageUrl.match(/[\w-]+\.(jpg|png|gif|jpeg)/g);
 
       // do not delete if userImage=no-image
-      if (userImage !== "no-image") {
+      if (userImage[0] !== "no-image.png") {
         admin.storage().bucket().file(userImage).delete();
       }
 
