@@ -1170,6 +1170,31 @@ exports.onShrineCreated = functions
       });
   });
 
+// trigger for updating associated collections to shrine
+exports.onShrineUpdated = functions
+  .region("europe-west2")
+  .firestore.document("shrines/{id}")
+  .onUpdate((change) => {
+    const batch = db.batch();
+
+    return db
+      .collection("posts")
+      .where("shrineName", "==", change.before.data().name)
+      .get()
+      .then((data) => {
+        data.forEach((doc) => {
+          batch.update(db.doc(`/posts/${doc.id}`), {
+            shrineName: change.after.data().name,
+          });
+        });
+
+        return batch.commit();
+      })
+      .catch((err) => {
+        console.log(err.message);
+      });
+  });
+
 // trigger for updating followership and users field once shrine is deleted
 exports.onShrineDeleted = functions
   .region("europe-west2")

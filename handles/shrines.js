@@ -170,35 +170,52 @@ exports.createShrine = (req, res) => {
 
 // edit shrine details
 exports.editShrineDetails = (req, res) => {
-  console.log(req.body);
   const editedShrine = {
     name: req.body.name,
     description: req.body.description,
   };
+
+  const currentShrineName = req.body.currentShrineName;
   // perform validation before proceeding
   const { valid, errors } = validateEditedShrineData(editedShrine);
 
   if (!valid) return res.status(400).json(errors);
 
-  // if valid update shrine
-  db.doc(`/shrines/${req.body.shrineId}`)
-    .update(editedShrine)
-    .then((doc) => {
-      console.log("shrine updated successfully");
-      return res.json("shrine updated successfully");
-    })
-    .catch((err) => console.error(err));
-
-  // return updated shrine
-  // db.doc(`/shrines/${req.body.shrineId}`)
-  //   .get()
-  //   .then((doc) => {
-  //     let shrineData = {};
-
-  //     shrineData = doc.data();
-  //     return res.json(shrineData);
-  //   })
-  //   .catch((err) => console.error(err));
+  // check to see if shrineName already exists
+  if (currentShrineName !== editedShrine.name) {
+    return db
+      .collection("shrines")
+      .where("name", "==", editedShrine.name)
+      .limit(1)
+      .get()
+      .then((data) => {
+        if (data.docs[0]) {
+          return res
+            .status(400)
+            .json({ shrineName: "This name is already taken" });
+        } else {
+          // if valid update shrine
+          return db
+            .doc(`/shrines/${req.body.shrineId}`)
+            .update(editedShrine)
+            .then((doc) => {
+              console.log("shrine updated successfully");
+              return res.json("shrine updated successfully");
+            })
+            .catch((err) => console.error(err));
+        }
+      });
+  } else {
+    // if valid update shrine
+    return db
+      .doc(`/shrines/${req.body.shrineId}`)
+      .update(editedShrine)
+      .then((doc) => {
+        console.log("shrine updated successfully");
+        return res.json("shrine updated successfully");
+      })
+      .catch((err) => console.error(err));
+  }
 };
 
 // get authenticated user shrine names
