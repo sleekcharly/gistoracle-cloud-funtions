@@ -412,7 +412,10 @@ exports.onUserImageChange = functions
         .data()
         .imageUrl.match(/[\w-]+\.(jpg|png|gif|jpeg)/g);
 
-      admin.storage().bucket().file(userImage).delete();
+      // do not delete if userImage=no-image
+      if (userImage !== "no-image") {
+        admin.storage().bucket().file(userImage).delete();
+      }
 
       return db
         .collection("comments")
