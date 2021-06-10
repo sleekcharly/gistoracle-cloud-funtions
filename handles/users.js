@@ -227,8 +227,6 @@ exports.deleteUser = (req, res) => {
         userId.push(doc.id);
       });
 
-      console.log(userId);
-
       //delete user profile in database
       db.doc(`/users/${userId[0]}`)
         .delete()
@@ -274,7 +272,6 @@ exports.checkUserExists = (req, res) => {
 exports.setProfile = (req, res) => {
   // extract user credentials
   let credentials = req.body;
-  console.log(credentials);
 
   db.doc(`/users/${credentials.username}`)
     .set(credentials)
@@ -375,7 +372,6 @@ exports.checkPassword = async (req, res) => {
 
 // callback to check if email exists in database
 exports.checkEmailExists = (req, res) => {
-  console.log(req.params.email);
   return db
     .collection("users")
     .where("email", "==", req.params.email)
@@ -384,7 +380,6 @@ exports.checkEmailExists = (req, res) => {
     .then((data) => {
       // check to see if email is already attached to an existing user
       if (data.docs[0]) {
-        console.log(data.docs[0]);
         return res
           .status(400)
           .json({ email: "This email is already attached to a user" });
@@ -778,7 +773,8 @@ exports.uploadImage = (req, res) => {
       mimetype !== "image/jpeg" &&
       mimetype !== "image/jpg" &&
       mimetype !== "image/png" &&
-      mimetype !== "image/gif"
+      mimetype !== "image/gif" &&
+      mimetype !== "image/tiff"
     ) {
       return res.status(400).json({
         error: "Wrong file type submitted, image must be in jpg, png or gif ",
@@ -846,7 +842,7 @@ exports.uploadImage = (req, res) => {
 
 // callback function for editor image upload route
 exports.editorUploadImage = (req, res) => {
-  console.log("reqest", req.body);
+  console.log("request", req.body);
   // install the busboy package
   // then require the following packages
   const BusBoy = require("busboy");
@@ -902,7 +898,6 @@ exports.editorUploadImage = (req, res) => {
           })
           .then((data) => {
             let file = data[0];
-            console.log("returned data: ", file);
 
             const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/${file.name}?alt=media`;
 
@@ -914,8 +909,6 @@ exports.editorUploadImage = (req, res) => {
                 size: file.size,
               },
             ];
-
-            console.log("image url is :", result);
 
             return res.json({ result });
           })

@@ -28,8 +28,6 @@ admin.initializeApp({
       : process.env.FIREBASE_DEVELOPMENT_DATABASE_URL,
 });
 
-console.log(project);
-
 // console.log("environment: " + process.env.NODE_ENV);
 
 // instantiate the firebase store

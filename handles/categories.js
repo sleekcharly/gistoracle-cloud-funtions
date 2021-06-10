@@ -171,7 +171,7 @@ exports.getNextCategoryPosts = async (req, res) => {
             ...doc.data(),
           });
         });
-        console.log(posts);
+
         return res.json(posts);
       })
       .catch((err) => console.error(err));
