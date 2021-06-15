@@ -334,6 +334,9 @@ exports.getAllShrinePosts = (req, res) => {
 
 // callback function for following a shrine
 exports.followShrine = (req, res) => {
+  // set up batch writes
+  const batch = db.batch();
+
   const followDocument = db
     .collection("shrineFollows")
     .where("userId", "==", req.user.userId)
@@ -402,12 +405,20 @@ exports.followShrine = (req, res) => {
 
             //update user document
             const userRef = db.doc(`/users/${userId[0]}`);
-            userRef.update({
+            batch.update(userRef, {
               vibrations: admin.firestore.FieldValue.increment(0.2),
               shrines: admin.firestore.FieldValue.arrayUnion(
                 req.params.shrineId
               ),
             });
+
+            // update shrine document
+            const shrineRef = db.doc(`/shrines/${req.params.shrineId}`);
+            batch.update(shrineRef, {
+              users: admin.firestore.FieldValue.arrayUnion(req.user.userId),
+            });
+
+            batch.commit();
 
             return res.json(shrineData);
           });
@@ -423,6 +434,9 @@ exports.followShrine = (req, res) => {
 
 // callback function for unfollowing a shrine
 exports.unFollowShrine = (req, res) => {
+  // define batch write
+  const batch = db.batch();
+
   // retrieve shrinefollows  document from database
   const followDocument = db
     .collection("shrineFollows")
@@ -492,12 +506,20 @@ exports.unFollowShrine = (req, res) => {
             });
 
             const userRef = db.doc(`/users/${userId[0]}`);
-            userRef.update({
+            batch.update(userRef, {
               vibrations: admin.firestore.FieldValue.increment(-0.2),
               shrines: admin.firestore.FieldValue.arrayRemove(
                 req.params.shrineId
               ),
             });
+
+            // update shrine document
+            const shrineRef = db.doc(`/shrines/${req.params.shrineId}`);
+            batch.update(shrineRef, {
+              users: admin.firestore.FieldValue.arrayRemove(req.user.userId),
+            });
+
+            batch.commit();
 
             res.json(shrineData);
           });
