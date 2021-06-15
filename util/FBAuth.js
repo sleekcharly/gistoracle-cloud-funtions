@@ -34,34 +34,13 @@ module.exports = (req, res, next) => {
         .get();
     })
     .then((data) => {
-      let shrineIds = [];
-      let shrines = [];
-      let id = data.docs[0].data().userId;
-
-      // get subscribed shrines
-      db.collection("shrines")
-        .where("users", "array-contains", id)
-        .orderBy("latestPostCreation", "desc")
-        .get()
-        .then((data) => {
-          data.forEach((doc) => {
-            shrineIds.push(doc.id);
-            shrines.push({
-              shrineId: doc.id,
-              ...doc.data(),
-            });
-          });
-        })
-        .catch((err) => console.error(err));
-
       req.user.username = data.docs[0].data().username;
       req.user.imageUrl = data.docs[0].data().imageUrl;
       req.user.vibrations = data.docs[0].data().vibrations;
       req.user.categories = data.docs[0].data().categories;
       req.user.userId = data.docs[0].data().userId;
       req.user.location = data.docs[0].data().location;
-      req.user.shrines = shrineIds;
-      req.user.subscribedShrines = shrines;
+      req.user.shrines = data.docs[0].data().shrines;
       req.user.followers = data.docs[0].data().userFollowers;
       req.user.following = data.docs[0].data().userFollowing;
       req.user.email = data.docs[0].data().email;

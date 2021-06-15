@@ -588,7 +588,6 @@ exports.getUserDetails = (req, res) => {
 // get a non authenticated user's credentials
 exports.getUserCredentials = (req, res) => {
   let credentials = {};
-  console.log(credentials);
 
   return db
     .collection("users")
@@ -599,7 +598,6 @@ exports.getUserCredentials = (req, res) => {
       if (data) {
         credentials = data.docs[0].data();
       }
-
       return res.json(credentials);
     })
     .catch((err) => {
@@ -742,9 +740,6 @@ exports.getAuthenticatedUser = (req, res) => {
       data.forEach((doc) => {
         userData.savedPosts.push(doc.data());
       });
-
-      userData.credentials.shrines = req.user.shrines;
-      userData.credentials.subscribedShrines = req.user.subscribedShrines;
       return res.json(userData);
     })
     .catch((err) => {

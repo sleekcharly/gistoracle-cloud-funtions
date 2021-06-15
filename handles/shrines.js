@@ -221,6 +221,7 @@ exports.editShrineDetails = (req, res) => {
 exports.getUserSubscribedShrines = (req, res) => {
   db.collection("shrines")
     .where("users", "array-contains", req.user.userId)
+    .orderBy("latestPostCreation", "desc")
     .get()
     .then((data) => {
       let shrines = [];
@@ -333,8 +334,6 @@ exports.getAllShrinePosts = (req, res) => {
 
 // callback function for following a shrine
 exports.followShrine = (req, res) => {
-  const batch = db.batch();
-
   const followDocument = db
     .collection("shrineFollows")
     .where("userId", "==", req.user.userId)
@@ -403,25 +402,14 @@ exports.followShrine = (req, res) => {
 
             //update user document
             const userRef = db.doc(`/users/${userId[0]}`);
-            batch.update(userRef, {
+            userRef.update({
               vibrations: admin.firestore.FieldValue.increment(0.2),
               shrines: admin.firestore.FieldValue.arrayUnion(
                 req.params.shrineId
               ),
             });
 
-            const shrineRef = db.doc(`/shrines/${req.params.shrineId}`);
-            batch.update(shrineRef, {
-              users: admin.firestore.FieldValue.arrayUnion(req.user.userId),
-            });
-
-            return batch.commit();
-          })
-          .then(() => {
             return res.json(shrineData);
-          })
-          .catch((err) => {
-            console.error(err);
           });
       } else {
         return res.status(400).json({ error: "shrine already followed" });
@@ -435,8 +423,6 @@ exports.followShrine = (req, res) => {
 
 // callback function for unfollowing a shrine
 exports.unFollowShrine = (req, res) => {
-  const batch = db.batch();
-
   // retrieve shrinefollows  document from database
   const followDocument = db
     .collection("shrineFollows")
@@ -506,22 +492,14 @@ exports.unFollowShrine = (req, res) => {
             });
 
             const userRef = db.doc(`/users/${userId[0]}`);
-            batch.update(userRef, {
+            userRef.update({
               vibrations: admin.firestore.FieldValue.increment(-0.2),
               shrines: admin.firestore.FieldValue.arrayRemove(
                 req.params.shrineId
               ),
             });
 
-            const shrineRef = db.doc(`/shrines/${req.params.shrineId}`);
-            batch.update(shrineRef, {
-              users: admin.firestore.FieldValue.arrayRemove(req.user.userId),
-            });
-
-            return batch.commit();
-          })
-          .then(() => {
-            return res.json(shrineData);
+            res.json(shrineData);
           });
       }
     })
