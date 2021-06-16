@@ -40,7 +40,7 @@ module.exports = (req, res, next) => {
       req.user.categories = data.docs[0].data().categories;
       req.user.userId = data.docs[0].data().userId;
       req.user.location = data.docs[0].data().location;
-      req.user.shrines = data.docs[0].data().shrines;
+
       req.user.followers = data.docs[0].data().userFollowers;
       req.user.following = data.docs[0].data().userFollowing;
       req.user.email = data.docs[0].data().email;
@@ -60,6 +60,21 @@ module.exports = (req, res, next) => {
         });
       });
       req.user.savedPosts = posts;
+
+      return db
+        .collection("shrines")
+        .where("users", "array-contains", req.user.userId)
+        .orderBy("latestPostCreation", "desc")
+        .get();
+    })
+    .then((data) => {
+      let shrines = [];
+      data.forEach((doc) => {
+        shrines.push(doc.id);
+      });
+
+      req.user.shrines = shrines;
+
       return next();
     })
     .catch((err) => {
